@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<launch>
+	<!-- Load controller configurations from YAML file to parameter server -->
+	<rosparam file="$(find turtlebot3_custom)/config/control.yaml" command="load" />
+
+	<include file="$(find turtlebot3_bringup)/launch/includes/description.launch.xml">
+		<arg name="model" value="custom" />
+	</include>
+
+	<node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+		<param name="publish_frequency" type="double" value="50.0" />
+	</node>
+
+	<node pkg="turtlebot3_custom" type="turtlebot3_custom_hardware" name="tb3_hardware" output="screen"/>
+	<node pkg="controller_manager" type="spawner" name="controller_spawner" output="screen" args="joint_state_controller diff_drive_controller"/>
+
+	<node name="left_wheel_pid" pkg="pid" type="controller" ns="left_wheel" output="screen">
+		<param name="node_name" value="left_wheel_pid"/>
+		<param name="Kp" value="12.0"/>
+		<param name="Ki" value="0.2"/>
+		<param name="Kd" value="0.01"/>
+		<param name="upper_limit" value="255"/>
+		<param name="lower_limit" value="-255"/>
+		<param name="windup_limit" value="100"/>
+		<param name="max_loop_frequency" value="50.0"/>
+		<param name="min_loop_frequency" value="50.0"/>
+		<param name="cutoff_frequency" value="10"/>
+	</node>
+
+	<node name="right_wheel_pid" pkg="pid" type="controller" ns="right_wheel" output="screen">
+		<param name="node_name" value="right_wheel_pid"/>
+		<param name="Kp" value="11.0"/>
+		<param name="Ki" value="0.2"/>
+		<param name="Kd" value="0.01"/>
+		<param name="upper_limit" value="255"/>
+		<param name="lower_limit" value="-255"/>
+		<param name="windup_limit" value="100"/>
+		<param name="max_loop_frequency" value="50.0"/>
+		<param name="min_loop_frequency" value="50.0"/>
+		<param name="cutoff_frequency" value="10"/>
+	</node>
+
+	<node name="rplidarNode" pkg="rplidar_ros" type="rplidarNode" output="screen">
+		<param name="serial_port" type="string" value="/dev/ttyUSB0"/>  
+		<param name="frame_id" type="string" value="base_scan"/>
+		<param name="angle_compensate" type="bool" value="true"/>
+	</node>
+</launch>
