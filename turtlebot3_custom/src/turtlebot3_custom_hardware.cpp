@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
 	spinner.start();
 
 	ros::Time prev_time = ros::Time::now();
-	ros::Rate loop_rate(50);
+	ros::Rate loop_rate(30);
 	while(ros::ok()) {
 		const ros::Time time = ros::Time::now();
 		const ros::Duration period = time - prev_time;
