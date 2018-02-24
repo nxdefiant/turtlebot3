@@ -14,32 +14,6 @@
 	<node pkg="turtlebot3_custom" type="turtlebot3_custom_hardware" name="tb3_hardware" output="screen"/>
 	<node pkg="controller_manager" type="spawner" name="controller_spawner" output="screen" args="joint_state_controller diff_drive_controller"/>
 
-	<node name="left_wheel_pid" pkg="pid" type="controller" ns="left_wheel" output="screen">
-		<param name="node_name" value="left_wheel_pid"/>
-		<param name="Kp" value="27.0"/>
-		<param name="Ki" value="0.0"/>
-		<param name="Kd" value="0.0"/>
-		<param name="upper_limit" value="255"/>
-		<param name="lower_limit" value="-255"/>
-		<param name="windup_limit" value="100"/>
-		<param name="max_loop_frequency" value="30.0"/>
-		<param name="min_loop_frequency" value="30.0"/>
-		<param name="cutoff_frequency" value="10"/>
-	</node>
-
-	<node name="right_wheel_pid" pkg="pid" type="controller" ns="right_wheel" output="screen">
-		<param name="node_name" value="right_wheel_pid"/>
-		<param name="Kp" value="27.0"/>
-		<param name="Ki" value="0.0"/>
-		<param name="Kd" value="0.0"/>
-		<param name="upper_limit" value="255"/>
-		<param name="lower_limit" value="-255"/>
-		<param name="windup_limit" value="100"/>
-		<param name="max_loop_frequency" value="30.0"/>
-		<param name="min_loop_frequency" value="30.0"/>
-		<param name="cutoff_frequency" value="10"/>
-	</node>
-
 	<node name="rplidarNode" pkg="rplidar_ros" type="rplidarNode" output="screen">
 		<param name="serial_port" type="string" value="/dev/ttyUSB0"/>  
 		<param name="frame_id" type="string" value="base_scan"/>

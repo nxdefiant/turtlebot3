@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
+#include <byteswap.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/joint_state_interface.h>
 #include <hardware_interface/robot_hw.h>
@@ -20,13 +21,6 @@ class Turtlebot3 : public hardware_interface::RobotHW
 	public:
 		Turtlebot3(ros::NodeHandle nh) { 
 			this->nh = nh;
-			pub_left_wheel_state = nh.advertise<std_msgs::Float64>("/left_wheel/state", 10);
-			pub_left_wheel_setpoint = nh.advertise<std_msgs::Float64>("/left_wheel/setpoint", 10);
-			sub_left_wheel_set = nh.subscribe("/left_wheel/control_effort", 10, &Turtlebot3::cbLeftWheelSet, this);
-			pub_right_wheel_state = nh.advertise<std_msgs::Float64>("/right_wheel/state", 10);
-			pub_right_wheel_setpoint = nh.advertise<std_msgs::Float64>("/right_wheel/setpoint", 10);
-			sub_right_wheel_set = nh.subscribe("/right_wheel/control_effort", 10, &Turtlebot3::cbRightWheelSet, this);
-
 			// connect and register the joint state interface
 			hardware_interface::JointStateHandle state_handle_left("wheel_left_joint", &pos[0], &vel[0], &eff[0]);
 			jnt_state_interface.registerHandle(state_handle_left);
@@ -85,34 +79,17 @@ class Turtlebot3 : public hardware_interface::RobotHW
 			pos[0] += vel[0] * period.toSec();
 			pos[1] += vel[1] * period.toSec();
 
-			msg_left.data = vel[0];
-			pub_left_wheel_state.publish(msg_left);
-			msg_right.data = vel[1];
-			pub_right_wheel_state.publish(msg_right);
-
 			error:
 				close(file);
 		}
 
 		// Writes current velocity command to hardware
 		void write() {
-			std_msgs::Float64 msg_left, msg_right;
-			msg_left.data = cmd[0];
-			pub_left_wheel_setpoint.publish(msg_left);
-			msg_right.data = cmd[1];
-			pub_right_wheel_setpoint.publish(msg_right);
-		}
-
-		void cbLeftWheelSet(const std_msgs::Float64::ConstPtr& msg) {
 			int file;
 			uint8_t buf[32];
 			int ret;
-			double val = msg->data;
+			int16_t speed_l, speed_r;
 
-			// Interpret pid values with wring polarity as 0
-			if (val < min_pwm && cmd[0] > 0) val = min_pwm;
-			else if (val > -min_pwm && cmd[0] < 0) val = -min_pwm;
-			else if (cmd[0] == 0) val = 0;
 
 			if ((file = open(I2C_FILE, O_RDWR)) < 0) {
 				perror("open");
@@ -124,41 +101,13 @@ class Turtlebot3 : public hardware_interface::RobotHW
 				goto error;
 			}
 
-			buf[0] = (int16_t)val;
-			buf[1] = (int16_t)val>>8;
-			if ((ret = i2c_smbus_write_i2c_block_data(file, 0x20, 2, buf)) != 0) {
-				perror("i2c_smbus_write_block_data");
-				goto error;
-			}
-
-			error:
-				close(file);
-		}
-
-		void cbRightWheelSet(const std_msgs::Float64::ConstPtr& msg) {
-			int file;
-			uint8_t buf[32];
-			int ret;
-			double val = msg->data;
-
-			// Interpret pid values with wring polarity as 0
-			if (val < min_pwm && cmd[1] > 0) val = min_pwm;
-			else if (val > -min_pwm && cmd[1] < 0) val = -min_pwm;
-			else if (cmd[1] == 0) val = 0;
-
-			if ((file = open(I2C_FILE, O_RDWR)) < 0) {
-				perror("open");
-				goto error;
-			}
-
-			if (ioctl(file, I2C_SLAVE, I2C_ADDR) < 0) {
-				perror("ioctl");
-				goto error;
-			}
-
-			buf[0] = (int16_t)val;
-			buf[1] = (int16_t)val>>8;
-			if ((ret = i2c_smbus_write_i2c_block_data(file, 0x22, 2, buf)) != 0) {
+			speed_l = cmd[0] * 60/(2*M_PI); // rad/s to rpm
+			speed_r = cmd[1] * 60/(2*M_PI); // rad/s to rpm
+			buf[0] = speed_l;
+			buf[1] = speed_l>>8;
+			buf[2] = speed_r;
+			buf[3] = speed_r>>8;
+			if ((ret = i2c_smbus_write_i2c_block_data(file, 0x20, 4, buf)) != 0) {
 				perror("i2c_smbus_write_block_data");
 				goto error;
 			}
@@ -168,7 +117,40 @@ class Turtlebot3 : public hardware_interface::RobotHW
 		}
 
 		void cbDynReconf(turtlebot3_custom::Turtlebot3Config &config, uint32_t level) {
-			min_pwm = config.min_pwm;
+			int file;
+			uint8_t buf[32];
+			int ret;
+			float kp=config.kp;
+			float ki=config.ki;
+			float kd=config.kd;
+
+			ret = __bswap_32(*(int32_t *)&kp);
+			kp = *(float *)&ret;
+			ret = __bswap_32(*(int32_t *)&ki);
+			ki = *(float *)&ret;
+			ret = __bswap_32(*(int32_t *)&kd);
+			kd = *(float *)&ret;
+
+			if ((file = open(I2C_FILE, O_RDWR)) < 0) {
+				perror("open");
+				goto error;
+			}
+
+			if (ioctl(file, I2C_SLAVE, I2C_ADDR) < 0) {
+				perror("ioctl");
+				goto error;
+			}
+
+			memcpy(buf+0, &kp, 4);
+			memcpy(buf+4, &ki, 4);
+			memcpy(buf+8, &kd, 4);
+			if ((ret = i2c_smbus_write_i2c_block_data(file, 0x70, 12, buf)) != 0) {
+				perror("i2c_smbus_write_block_data");
+				goto error;
+			}
+
+			error:
+				close(file);
 		}
 
 
@@ -180,12 +162,5 @@ class Turtlebot3 : public hardware_interface::RobotHW
 		double pos[2] = {0.0, 0.0};
 		double vel[2] = {0.0, 0.0};
 		double eff[2] = {0.0, 0.0};
-		double min_pwm;
-		ros::Publisher pub_left_wheel_state;
-		ros::Publisher pub_left_wheel_setpoint;
-		ros::Subscriber sub_left_wheel_set;
-		ros::Publisher pub_right_wheel_state;
-		ros::Publisher pub_right_wheel_setpoint;
-		ros::Subscriber sub_right_wheel_set;
 		dynamic_reconfigure::Server<turtlebot3_custom::Turtlebot3Config> server;
 };
