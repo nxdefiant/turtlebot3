@@ -11,3 +11,6 @@ diff_drive_controller:
   wheel_separation: 0.175
   wheel_radius: 0.035
   base_frame_id: 'base_footprint'
+  # Odometry fused with IMU is published by robot_localization, so
+  # no need to publish a TF based on encoders alone.
+  enable_odom_tf: false
