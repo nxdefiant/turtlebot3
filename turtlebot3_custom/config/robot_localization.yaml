@@ -81,8 +81,8 @@ odom0: /diff_drive_controller/odom
 # if unspecified, effectively making this parameter required for each sensor.
 odom0_config: [false, false, false,
                false, false, false,
-               true,  true,   true,
-               false, false,  true,
+               true,  true,  true,
+               false, false, true,
                false, false, false]
 
 # If you have high-frequency data or are running with a low frequency parameter value, then you may want to increase
@@ -108,23 +108,34 @@ odom0_differential: false
 # for all future measurements. While you can achieve the same effect with the differential paremeter, the key
 # difference is that the relative parameter doesn't cause the measurement to be converted to a velocity before
 # integrating it. If you simply want your measurements to start at 0 for a given sensor, set this to true.
-odom0_relative: false
+odom0_relative: true
 
 imu0: /imu
 imu0_config: [false, false, false,
               true,  true,  true,
               false, false, false,
-              false, false, false,
+              true,  true,  true,
               false, false, false]
 imu0_nodelay: false
 imu0_differential: false
-imu0_relative: false
+imu0_relative: true
 imu0_queue_size: 5
 
 # [ADVANCED] Some IMUs automatically remove acceleration due to gravity, and others don't. If yours doesn't, please set
 # this to true, and *make sure* your data conforms to REP-103, specifically, that the data is in ENU frame.
 imu0_remove_gravitational_acceleration: true
 
-# If true, will dynamically scale the process_noise_covariance based on the robot's velocity. This is useful, e.g., when you want your
-# robots estimate error covariance to stop growing when the robot is stationary. Defaults to false.
-dynamic_process_noise_covariance: true
+#pose0: /pose_with_covariance_stamped
+#
+#pose0_config: [true , true,  false,
+#               false, false, false,
+#               false, false, false,
+#               false, false, false,
+#               false, false, false]
+#
+#pose0_differential: true
+#pose0_relative: false
+#
+## If true, will dynamically scale the process_noise_covariance based on the robot's velocity. This is useful, e.g., when you want your
+## robots estimate error covariance to stop growing when the robot is stationary. Defaults to false.
+#dynamic_process_noise_covariance: true
