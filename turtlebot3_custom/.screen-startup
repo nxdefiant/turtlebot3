@@ -1,0 +1,4 @@
+source $HOME/.screenrc
+
+screen 0 bash -ic 'roscore; bash'
+screen 1 bash -ic 'roslaunch --wait turtlebot3_custom tb3.launch; bash'
