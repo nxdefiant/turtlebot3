@@ -114,7 +114,7 @@ imu0: /imu
 imu0_config: [false, false, false,
               true,  true,  true,
               false, false, false,
-              true,  true,  true,
+              false, false, false,
               false, false, false]
 imu0_nodelay: false
 imu0_differential: false

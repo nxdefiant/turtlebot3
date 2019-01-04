@@ -32,9 +32,10 @@
 		<param name="camera_frame_id" value="raspicam"/>
 	</node>
 
-	<node pkg="razor_imu_9dof" type="imu_node.py" name="imu_node" output="screen">
-		<rosparam file="$(find turtlebot3_custom)/config/razor.yaml" command="load"/>
+	<node pkg="turtlebot3_custom" type="tinkerforge_imu2.py" name="tinkerforge_imu_brick2" output="screen">
+		<param name="uid" value="6fASKs"/>
 	</node>
+
 
 	<!-- x y z qx qy qz qw frame_id child_frame_id  period_in_ms -->
 	<node pkg="tf" type="static_transform_publisher" name="imu_broadcaster" args="0 0 0 0 0 0 1 base_footprint base_imu_link 50" />

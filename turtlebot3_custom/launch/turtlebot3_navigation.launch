@@ -4,8 +4,7 @@
 
 	<!-- Map server -->
 	<arg name="map_file" default="$(find turtlebot3_custom)/maps/map.yaml"/>
-	<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)">
-	</node>
+	<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)"/>
 
 	<!-- AMCL -->
 	<include file="$(find turtlebot3_navigation)/launch/amcl.launch.xml"/>
