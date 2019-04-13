@@ -45,6 +45,7 @@ class Turtlebot3 : public hardware_interface::RobotHW
 			int file;
 			uint8_t buf[32];
 			int ret;
+			uint8_t chksum=0xa5;
 			std_msgs::Float64 msg_left;
 			std_msgs::Float64 msg_right;
 		       
@@ -62,15 +63,12 @@ class Turtlebot3 : public hardware_interface::RobotHW
 				perror("i2c_smbus_read_block_data");
 				goto error;
 			}
+			for (int i=0; i<8; i++) {
+				chksum^=buf[i];
+			}
 
-			if (buf[8] != 0xa5) {
-				fprintf(stderr, "I2C Read error: Well known 0xa5 mismatch\n");
-				goto error;
-			} else if (std::isnan(vel[0])) {
-				fprintf(stderr, "I2C Read error: Value 1 is NaN\n");
-				goto error;
-			} else if (std::isnan(vel[1])) {
-				fprintf(stderr, "I2C Read error: Value 2 is NaN\n");
+			if (buf[8] != chksum) {
+				ROS_ERROR("I2C Read error: Chksum mismatch, expected 0x%x got 0x%x", chksum, buf[8]);
 				goto error;
 			}
 			vel[0] = *(float*)(buf+0) *(2*M_PI)/60; // rpm to rad/s
