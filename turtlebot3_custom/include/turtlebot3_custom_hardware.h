@@ -142,7 +142,9 @@ class Turtlebot3 : public hardware_interface::RobotHW
 			memcpy(buf+0, &kp, 4);
 			memcpy(buf+4, &ki, 4);
 			memcpy(buf+8, &kd, 4);
-			if ((ret = i2c_smbus_write_i2c_block_data(file, 0x70, 12, buf)) != 0) {
+			buf[12] = config.motor_inc_step;
+			buf[13] = config.motor_min;
+			if ((ret = i2c_smbus_write_i2c_block_data(file, 0x70, 14, buf)) != 0) {
 				perror("i2c_smbus_write_block_data");
 				goto error;
 			}
