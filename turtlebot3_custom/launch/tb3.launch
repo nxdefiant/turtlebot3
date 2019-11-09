@@ -40,6 +40,9 @@
 		<rosparam command="load" file="$(find turtlebot3_custom)/config/robot_localization.yaml"/>
 	</node>
 
+	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
+	<node pkg="web_video_server" type="web_video_server" name="web_video_server" output="screen"/>
+
 	<!--
 	<node pkg="laser_scan_matcher" type="laser_scan_matcher_node"  name="laser_scan_matcher_node" output="screen">
 		<param name="fixed_frame" value = "odom"/>
